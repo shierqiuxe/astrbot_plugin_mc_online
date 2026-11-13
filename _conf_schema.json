@@ -1,0 +1,170 @@
+{
+  "name": {
+    "description": "第 1 台 · 名字",
+    "type": "string",
+    "default": "",
+    "hint": "随便起个名，会显示在看板页签和 /在线 回复上。不填就用地址。"
+  },
+  "address": {
+    "description": "第 1 台 · 地址",
+    "type": "string",
+    "default": "",
+    "hint": "服务器的 IP 或域名，比如 mc.example.com。留空就不采样。"
+  },
+  "game_port": {
+    "description": "第 1 台 · 游戏端口",
+    "type": "int",
+    "default": 25565,
+    "hint": "服务器列表里那个端口，不是网页端口。有的面板会单独给你一个数字，照着填就行。"
+  },
+  "mode": {
+    "description": "第 1 台 · 取数方式",
+    "type": "string",
+    "default": "自动",
+    "options": [
+      "自动",
+      "查询协议",
+      "RCON",
+      "服务器列表"
+    ],
+    "hint": "自动 = 先试查询协议（能拿到全部在线人名），不行再试 RCON，最后退到服务器列表（只能拿到人数和部分名字）。查询协议要服务器开 enable-query，RCON 要开 rcon 并填密码。"
+  },
+  "query_port": {
+    "description": "第 1 台 · 查询协议端口",
+    "type": "int",
+    "default": 0,
+    "hint": "填 0 就跟游戏端口一样。有的服务器单独开了 query.port。"
+  },
+  "rcon_port": {
+    "description": "第 1 台 · RCON 端口",
+    "type": "int",
+    "default": 25575,
+    "hint": "server.properties 里 rcon.port 的值。"
+  },
+  "rcon_password": {
+    "description": "第 1 台 · RCON 密码",
+    "type": "string",
+    "default": "",
+    "hint": "server.properties 里 rcon.password。不填就不用 RCON 这条路。"
+  },
+  "interval": {
+    "description": "采样间隔（秒）",
+    "type": "int",
+    "default": 60,
+    "hint": "多久问一次服务器。60 秒够用了，问太勤对服务器是负担。多台服会挨个问。最小 20 秒。"
+  },
+  "keep_days": {
+    "description": "保留天数",
+    "type": "int",
+    "default": 90,
+    "hint": "数据文件按天存，超过这个天数的自动删掉。"
+  },
+  "time_zone": {
+    "description": "时区",
+    "type": "string",
+    "default": "UTC+8",
+    "hint": "图上那一列时间、还有「今天/本周」的分界，都按这个时区算。填 UTC+8 是北京时间，填 local 跟服务器系统时区走。"
+  },
+  "name2": {
+    "description": "第 2 台 · 名字",
+    "type": "string",
+    "default": "",
+    "hint": "不填就用地址当名字。地址留空就跳过这台。"
+  },
+  "address2": {
+    "description": "第 2 台 · 地址",
+    "type": "string",
+    "default": "",
+    "hint": "填了就会跟着一块儿盯；留空就当没有这台。"
+  },
+  "game_port2": {
+    "description": "第 2 台 · 游戏端口",
+    "type": "int",
+    "default": 25565,
+    "hint": "不是网页端口。没有就填 25565。"
+  },
+  "mode2": {
+    "description": "第 2 台 · 取数方式",
+    "type": "string",
+    "default": "自动",
+    "options": [
+      "自动",
+      "查询协议",
+      "RCON",
+      "服务器列表"
+    ],
+    "hint": "一般填「自动」就行。"
+  },
+  "query_port2": {
+    "description": "第 2 台 · 查询协议端口",
+    "type": "int",
+    "default": 0,
+    "hint": "0 = 跟游戏端口一样。"
+  },
+  "rcon_port2": {
+    "description": "第 2 台 · RCON 端口",
+    "type": "int",
+    "default": 25575,
+    "hint": "不用 RCON 就留默认。"
+  },
+  "rcon_password2": {
+    "description": "第 2 台 · RCON 密码",
+    "type": "string",
+    "default": "",
+    "hint": "不用 RCON 就留空。"
+  },
+  "name3": {
+    "description": "第 3 台 · 名字",
+    "type": "string",
+    "default": "",
+    "hint": "不填就用地址当名字。地址留空就跳过这台。"
+  },
+  "address3": {
+    "description": "第 3 台 · 地址",
+    "type": "string",
+    "default": "",
+    "hint": "填了就会跟着一块儿盯；留空就当没有这台。"
+  },
+  "game_port3": {
+    "description": "第 3 台 · 游戏端口",
+    "type": "int",
+    "default": 25565,
+    "hint": "不是网页端口。没有就填 25565。"
+  },
+  "mode3": {
+    "description": "第 3 台 · 取数方式",
+    "type": "string",
+    "default": "自动",
+    "options": [
+      "自动",
+      "查询协议",
+      "RCON",
+      "服务器列表"
+    ],
+    "hint": "一般填「自动」就行。"
+  },
+  "query_port3": {
+    "description": "第 3 台 · 查询协议端口",
+    "type": "int",
+    "default": 0,
+    "hint": "0 = 跟游戏端口一样。"
+  },
+  "rcon_port3": {
+    "description": "第 3 台 · RCON 端口",
+    "type": "int",
+    "default": 25575,
+    "hint": "不用 RCON 就留默认。"
+  },
+  "rcon_password3": {
+    "description": "第 3 台 · RCON 密码",
+    "type": "string",
+    "default": "",
+    "hint": "不用 RCON 就留空。"
+  },
+  "announce": {
+    "description": "有人上下线时在群里说一声",
+    "type": "bool",
+    "default": false,
+    "hint": "打开后，有人进服/退服会在订阅的群里发一句。默认关，免得刷屏。"
+  }
+}

@@ -1,0 +1,10 @@
+name: astrbot_plugin_mc_online
+display_name: Minecraft数据看板
+desc: 记录我的世界服务器谁什么时候在线、每天多少人、哪个时段最热闹；支持多台同时盯，面板里有图表，聊天里 /在线 能看卡片和曲线
+version: v1.0.0
+author: shierqiuxe
+repo: https://github.com/shierqiuxe/astrbot_plugin_mc_online
+astrbot_version: ">=4.4,<5"
+support_platforms:
+  - aiocqhttp
+  - qq_official

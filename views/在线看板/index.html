@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minecraft数据看板</title>
+<style>
+  :root {
+    --底: #080d18;
+    --卡: rgba(18, 26, 44, .72);
+    --线: rgba(110, 150, 220, .14);
+    --字: #e6eeff;
+    --字淡: #8a9bb8;
+    --青: #35d0a5;
+    --蓝: #5894ff;
+    --紫: #b284ff;
+    --黄: #f5c451;
+    --红: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 22px 26px 40px;
+    background: radial-gradient(1200px 600px at 20% -10%, #16233f 0%, var(--底) 60%);
+    color: var(--字);
+    font: 13px/1.6 "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .顶 {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 18px;
+  }
+  h1 {
+    margin: 0; font-size: 21px; font-weight: 600; letter-spacing: .02em;
+    background: linear-gradient(92deg, #cfe0ff, #7fd6ff 55%, #9ff3d4);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .副 { color: var(--字淡); font-size: 12.5px; margin-top: 4px; }
+  .状态 { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--字淡); }
+  .点 { width: 8px; height: 8px; border-radius: 50%; background: var(--红); box-shadow: 0 0 10px currentColor; }
+  .点.活 { background: var(--青); }
+
+  .卡组 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+  .卡 {
+    background: var(--卡); border: 1px solid var(--线); border-radius: 14px;
+    padding: 14px 16px; transition: border-color .2s;
+  }
+  .卡:hover { border-color: rgba(120, 170, 255, .3); }
+  .卡 .名 { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--字淡); font-size: 12px; }
+  .卡 .值 { font-size: 26px; font-weight: 600; margin-top: 6px; letter-spacing: .01em; }
+  .卡 .值 em { font-style: normal; font-size: 13px; color: var(--字淡); font-weight: 400; margin-left: 3px; }
+  .卡 .细 { color: var(--字淡); font-size: 11.5px; margin-top: 4px; }
+
+  .块 { background: var(--卡); border: 1px solid var(--线); border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+  .块 h2 { margin: 0 0 12px; font-size: 13.5px; font-weight: 600; color: #cfe0ff; letter-spacing: .03em; }
+  .两列 { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
+
+  svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .轴字 { fill: #6a7c99; font-size: 10px; }
+  .网格线 { stroke: rgba(110, 150, 220, .1); stroke-width: 1; }
+
+  .热 { display: grid; grid-template-columns: 34px repeat(24, 1fr); gap: 3px; font-size: 10px; }
+  .热 span { color: var(--字淡); text-align: center; }
+  .热 i {
+    display: block; height: 18px; border-radius: 3px; background: rgba(88, 148, 255, .09);
+    font-style: normal; box-shadow: inset 0 0 0 1px rgba(120, 160, 230, .07);
+  }
+  .热 .周 { text-align: right; padding-right: 6px; color: var(--字淡); line-height: 18px; }
+
+  ul.排 { list-style: none; margin: 0; padding: 0; }
+  ul.排 li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px dashed rgba(110, 150, 220, .1); }
+  ul.排 li:last-child { border-bottom: 0; }
+  ul.排 .号 { width: 20px; color: var(--字淡); font-size: 11.5px; text-align: right; }
+  ul.排 .名 { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.排 .时 { color: var(--青); font-size: 12px; }
+  ul.排 .条 { width: 92px; height: 4px; border-radius: 2px; background: rgba(88, 148, 255, .12); overflow: hidden; }
+  ul.排 .条 i { display: block; height: 100%; background: linear-gradient(90deg, #5894ff, #35d0a5); }
+
+  .页签 { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .页签 span {
+    cursor: pointer; padding: 7px 18px; border-radius: 10px; font-size: 13px;
+    color: var(--字淡); border: 1px solid var(--线); background: rgba(12, 18, 32, .5);
+    transition: all .15s;
+  }
+  .页签 span:hover { color: var(--字); border-color: rgba(120, 170, 255, .3); }
+  .页签 span.选 {
+    color: #cfe0ff; border-color: rgba(120, 170, 255, .45);
+    background: rgba(88, 148, 255, .14); font-weight: 600;
+  }
+  .切 { display: flex; gap: 6px; }
+  .切 span {
+    cursor: pointer; padding: 3px 10px; border-radius: 7px; font-size: 12px;
+    color: var(--字淡); border: 1px solid transparent;
+  }
+  .切 span.选 { color: #cfe0ff; border-color: rgba(120, 170, 255, .35); background: rgba(88, 148, 255, .12); }
+
+  .表区 { max-height: 360px; overflow: auto; border-radius: 10px; border: 1px solid var(--线); background: rgba(8, 13, 24, .32); }
+  table { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; font-size: 12.5px; margin: 0; }
+  table th, table td {
+    padding: 9px 14px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    border-bottom: 1px solid rgba(110, 150, 220, .07);
+  }
+  table th { color: var(--字淡); font-weight: 500; font-size: 11.5px; background: rgba(12, 18, 32, .6); position: sticky; top: 0; z-index: 1; }
+  table th + th, table td + td { border-left: 1px solid rgba(110, 150, 220, .07); }
+  table tbody tr:nth-child(even) td { background: rgba(110, 150, 220, .035); }
+  table tbody tr:hover td { background: rgba(110, 150, 220, .1); }
+  table th:nth-child(1), table td:nth-child(1) { width: 140px; }
+  table th:nth-child(2), table td:nth-child(2) { width: auto; }
+  table th:nth-child(3), table td:nth-child(3) { width: 92px; }
+  table th:nth-child(4), table td:nth-child(4) { width: 120px; }
+  .进 { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; background: rgba(53, 208, 165, .16); color: #5fe0b8; }
+  .出 { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 11px; background: rgba(255, 107, 107, .14); color: #ff9a9a; }
+  .空 { color: var(--字淡); padding: 18px 4px; font-size: 12px; }
+  .玩家 { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 4px; }
+  .个 { display: inline-flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 10px;
+        background: rgba(53, 208, 165, .09); border: 1px solid rgba(53, 208, 165, .22); font-size: 13px; }
+  .个 .头 { width: 6px; height: 6px; border-radius: 50%; background: #35d0a5; box-shadow: 0 0 9px rgba(53, 208, 165, .9); }
+  .个 .时 { color: var(--字淡); font-size: 11px; }
+  .钮 { background: rgba(110, 150, 220, .14); border: 1px solid rgba(110, 150, 220, .3); color: var(--字);
+        border-radius: 8px; padding: 5px 15px; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .钮:hover { background: rgba(110, 150, 220, .26); }
+  .钮:active { transform: translateY(1px); }
+  .钮:disabled { opacity: .45; cursor: default; }
+  .脚 { color: var(--字淡); font-size: 11.5px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="顶">
+  <div>
+    <h1>服务器在线看板</h1>
+    <div class="副" id="副">正在连账户本 ...</div>
+  </div>
+  <div class="状态"><span class="点" id="灯"></span><span id="状态字">连接中</span></div>
+</div>
+
+<div class="页签" id="页签" style="display:none"></div>
+
+<div class="卡组">
+  <div class="卡">
+    <div class="名"><span>现在在线</span><span id="原名" style="font-size:11px"></span></div>
+    <div class="值"><span id="现人">—</span><em id="现限"></em></div>
+    <div class="细" id="现名">—</div>
+  </div>
+  <div class="卡">
+    <div class="名"><span>今日峰值</span></div>
+    <div class="值"><span id="峰值">—</span><em>人</em></div>
+    <div class="细" id="峰值时">—</div>
+  </div>
+  <div class="卡">
+    <div class="名"><span>今天来过</span></div>
+    <div class="值"><span id="来过">—</span><em>人</em></div>
+    <div class="细" id="进出"></div>
+  </div>
+
+</div>
+
+<div class="块">
+  <h2 style="display:flex;justify-content:space-between;align-items:center">
+    <span>现在谁在线</span>
+    <button class="钮" id="刷新钮">刷新一下</button>
+  </h2>
+  <div class="玩家" id="玩家"><span class="空">还没数据</span></div>
+  <div class="脚" id="玩家脚">每隔一会儿自动采一次；想看最新的就按右上角。</div>
+</div>
+
+<div class="块">
+  <h2>今天每小时在线人数</h2>
+  <svg id="曲" viewBox="0 0 900 220" preserveAspectRatio="none"></svg>
+  <div class="脚" id="曲脚"></div>
+</div>
+
+<div class="两列">
+  <div class="块">
+    <h2>时段热力图（近 30 天平均在线）</h2>
+    <div class="热" id="热"></div>
+    <div class="脚">颜色越亮人越多。看久了就知道这服几点最热闹。</div>
+  </div>
+  <div class="块">
+    <h2 style="display:flex;justify-content:space-between;align-items:center">
+      <span>玩得最久</span>
+      <span class="切"><span class="选" data切="今天">今天</span><span data切="本周">本周</span></span>
+    </h2>
+    <ul class="排" id="排"><li class="空">还没数据</li></ul>
+  </div>
+</div>
+
+<div class="块">
+  <h2>最近进出</h2>
+  <div class="表区">
+    <table>
+      <thead><tr><th>时间</th><th>玩家</th><th>动作</th><th>这一趟</th></tr></thead>
+      <tbody id="流水"><tr><td colspan="4" class="空">还没有记录</td></tr></tbody>
+    </table>
+  </div>
+  <div class="脚" id="尾"></div>
+</div>
+
+<script>
+(function () {
+  var 数据 = null;
+  var 当前切 = '今天';
+  var 当前服 = '';        // 现在看的是哪台服（空 = 第一台）
+  var 诊断 = [];
+
+  function 服参() { return 当前服 ? 'summary/' + encodeURIComponent(当前服) : 'summary'; }
+
+  function 记诊断(条) { 诊断.push(条); try { console.warn('[在线看板] ' + 条); } catch (e) {} }
+
+  function 等桥() {
+    return new Promise(function (完) {
+      var 次数 = 0;
+      (function 试() {
+        var b = window.AstrBotPluginView || window.AstrBotPluginPage;
+        if (b && typeof b.apiGet === 'function') { 完(b); return; }
+        if (++次数 > 30) { 完(null); return; }
+        setTimeout(试, 100);
+      })();
+    });
+  }
+
+  function 剥壳(包) {
+    var 层 = 0;
+    while (包 && typeof 包 === 'object' && 层 < 6) {
+      if (包.status && 包.status !== 'ok' && 包.status !== 'success') {
+        throw new Error(包.message || 包.status);
+      }
+      if (包.ok !== undefined) return 包;
+      if (包.data !== undefined) { 包 = 包.data; 层++; continue; }
+      if (包.result !== undefined) { 包 = 包.result; 层++; continue; }
+      return 包;
+    }
+    return 包;
+  }
+
+  function 调接口(端点) {
+    return 等桥().then(function (桥) {
+      var 一个 = 桥 ? 桥.apiGet(端点).catch(function (e) {
+        记诊断('桥 ' + 端点 + ' 失败 ' + (e && e.message || e));
+        return null;
+      }) : Promise.resolve(null);
+      return 一个.then(function (回) {
+        if (回) return 剥壳(回);
+        var 前缀 = [
+          '/api/v1/plugins/extensions/astrbot_plugin_mc_online/',
+          '/api/plug/astrbot_plugin_mc_online/',
+          '/api/plugin/astrbot_plugin_mc_online/'
+        ];
+        var 试 = 前缀.map(function (p) {
+          return fetch(p + 端点, { credentials: 'include' }).then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          }).then(function (j) { return 剥壳(j); });
+        });
+        return Promise.any ? Promise.any(试).catch(function () { return null; })
+                           : 试[0].catch(function () { return null; });
+      });
+    });
+  }
+
+  function 调接口Post(端点) {
+    return 等桥().then(function (桥) {
+      if (桥 && typeof 桥.apiPost === 'function') {
+        return 桥.apiPost(端点, {}).then(剥壳).catch(function (e) {
+          记诊断('桥 POST ' + 端点 + ' 失败 ' + (e && e.message || e));
+          return null;
+        });
+      }
+      var 前缀 = [
+        '/api/v1/plugins/extensions/astrbot_plugin_mc_online/',
+        '/api/plug/astrbot_plugin_mc_online/',
+        '/api/plugin/astrbot_plugin_mc_online/'
+      ];
+      var 试 = 前缀.map(function (p) {
+        return fetch(p + 端点, {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }, body: '{}'
+        }).then(function (r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        }).then(function (j) { return 剥壳(j); });
+      });
+      return Promise.any ? Promise.any(试).catch(function () { return null; })
+                         : 试[0].catch(function () { return null; });
+    });
+  }
+
+  function 数(n) {
+    n = Number(n) || 0;
+    if (n < 10000) return String(Math.round(n));
+    if (n < 1e8) {
+      var 万 = n / 1e4;
+      return (万 >= 100 ? Math.round(万) : Math.round(万 * 100) / 100) + '万';
+    }
+    return (Math.round(n / 1e6) / 100) + '亿';
+  }
+
+  function 拿(名) { return document.getElementById(名); }
+
+  function 画曲(每小时) {
+    var svg = 拿('曲');
+    var 宽 = 900, 高 = 220, 左 = 34, 右 = 12, 上 = 12, 下 = 26;
+    var 内宽 = 宽 - 左 - 右, 内高 = 高 - 上 - 下;
+    var 最大 = 1;
+    每小时.forEach(function (h) { if (h.峰 > 最大) 最大 = h.峰; });
+    最大 = Math.max(最大, 2);
+    var 格 = 4;
+    var 部分 = [];
+    for (var i = 0; i <= 格; i++) {
+      var y = 上 + 内高 * i / 格;
+      var v = Math.round(最大 * (格 - i) / 格);
+      部分.push('<line class="网格线" x1="' + 左 + '" y1="' + y + '" x2="' + (宽 - 右) + '" y2="' + y + '"/>');
+      部分.push('<text class="轴字" x="' + (左 - 8) + '" y="' + (y + 3) + '" text-anchor="end">' + v + '</text>');
+    }
+    function 点(h, 值) { return [左 + 内宽 * h / 23, 上 + 内高 - 内高 * (值 / 最大)]; }
+    var 线 = [], 面 = [];
+    每小时.forEach(function (h, i) {
+      var p = 点(i, h.均);
+      线.push((i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1));
+      面.push((i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1));
+      if (h.峰 > 0) {
+        部分.push('<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.4" fill="#35d0a5"><title>' +
+          h.时 + ':00 平均 ' + h.均 + ' 人，最多 ' + h.峰 + ' 人</title></circle>');
+      }
+    });
+    面.push('L' + (左 + 内宽).toFixed(1) + ' ' + (上 + 内高) + ' L' + 左 + ' ' + (上 + 内高) + ' Z');
+    部分.unshift('<path d="' + 面.join(' ') + '" fill="rgba(53,208,165,.13)"/>');
+    部分.push('<path d="' + 线.join(' ') + '" fill="none" stroke="#35d0a5" stroke-width="2"/>');
+    [0, 6, 12, 18, 23].forEach(function (h) {
+      部分.push('<text class="轴字" x="' + (左 + 内宽 * h / 23) + '" y="' + (高 - 6) + '" text-anchor="middle">' + h + '点</text>');
+    });
+    svg.innerHTML = 部分.join('');
+  }
+
+  function 画热(格) {
+    var 盒 = 拿('热');
+    var 名 = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    var 最大 = 0.0001;
+    格.forEach(function (行) { 行.forEach(function (v) { if (v > 最大) 最大 = v; }); });
+    var 出 = ['<span></span>'];
+    for (var h = 0; h < 24; h++) 出.push('<span>' + (h % 3 === 0 ? h : '') + '</span>');
+    for (var w = 0; w < 7; w++) {
+      出.push('<span class="周">' + 名[w] + '</span>');
+      for (var hh = 0; hh < 24; hh++) {
+        var v = 格[w][hh];
+        var 度 = Math.min(1, v / 最大);
+        var 色 = 度 === 0 ? 'rgba(88,148,255,.06)' : 'rgba(53,208,165,' + (0.12 + 度 * 0.82).toFixed(2) + ')';
+        出.push('<i title="' + 名[w] + ' ' + hh + ':00 平均 ' + v + ' 人" style="background:' + 色 + '"></i>');
+      }
+    }
+    盒.innerHTML = 出.join('');
+  }
+
+  function 画排(列) {
+    var 盒 = 拿('排');
+    if (!列 || !列.length) { 盒.innerHTML = '<li class="空">还没有记录</li>'; return; }
+    var 最大 = 列[0].秒 || 1;
+    盒.innerHTML = 列.map(function (r, i) {
+      var 宽 = Math.max(4, Math.round(r.秒 / 最大 * 100));
+      return '<li><span class="号">' + (i + 1) + '</span><span class="名">' + 逃(r.名) +
+        '</span><span class="条"><i style="width:' + 宽 + '%"></i></span><span class="时">' + 逃(r.说) + '</span></li>';
+    }).join('');
+  }
+
+  function 补零(n) {
+    n = Number(n) || 0;
+    return n < 10 ? '0' + n : String(n);
+  }
+
+  function 逃(s) {    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function 画流水(行) {
+    var 盒 = 拿('流水');
+    if (!行 || !行.length) { 盒.innerHTML = '<tr><td colspan="4" class="空">今天还没有人进出</td></tr>'; return; }
+    盒.innerHTML = 行.map(function (r) {
+      var 章 = r.动作 === '进' ? '<span class="进">上线</span>' : '<span class="出">下线</span>';
+      return '<tr><td>' + 逃(r.时间) + '</td><td>' + 逃(r.谁) + '</td><td>' + 章 + '</td><td>' + 逃(r.时长 || '—') + '</td></tr>';
+    }).join('');
+  }
+
+  function 画玩家(现) {
+    var 盒 = 拿('玩家');
+    var 人 = 现.人 || [];
+    if (!人.length && 现.名单 && 现.名单.length) {
+      人 = 现.名单.map(function (n) { return { 名: n, 在: '' }; });
+    }
+    if (!人.length) {
+      盒.innerHTML = '<span class="空">' + (现.有数据 ? '现在没人在线' : '还没采到数据') + '</span>';
+      拿('玩家脚').textContent = 现.有数据
+        ? '上一次看是 ' + (现.时间 || '—') + '，服务器空着。'
+        : '等它采到第一次就有了。';
+      return;
+    }
+    盒.innerHTML = 人.map(function (x) {
+      return '<span class="个"><i class="头"></i>' + 逃(x.名) + '</span>';
+    }).join('');
+    拿('玩家脚').textContent = (现.人数 || 人.length) + ' 人在里面 · 数据抓于 ' + (现.时间 || '—');
+  }
+
+  function 画页签(名们, 当前) {
+    var 盒 = 拿('页签');
+    if (!名们 || 名们.length <= 1) { 盒.style.display = 'none'; return; }
+    盒.style.display = 'flex';
+    盒.innerHTML = 名们.map(function (名) {
+      return '<span data服="' + 逃(名) + '"' + (名 === 当前 ? ' class="选"' : '') + '>' + 逃(名) + '</span>';
+    }).join('');
+    盒.querySelectorAll('span').forEach(function (sp) {
+      sp.addEventListener('click', function () {
+        当前服 = sp.getAttribute('data服');
+        数据 = null;
+        盒.querySelectorAll('span').forEach(function (x) { x.className = ''; });
+        sp.className = '选';
+        拿('状态字').textContent = '切换中…';
+        拿一次();
+      });
+    });
+  }
+
+  function 画(数据) {
+    var 现 = 数据.现在 || {};
+    var 今 = 数据.今天 || {};
+    if (数据.服务器) 当前服 = 数据.服务器;
+    画页签(数据.服务器们, 数据.服务器);
+    拿('现人').textContent = 现.人数 == null ? '—' : 现.人数;
+    拿('现限').textContent = 现.上限 ? ' / ' + 现.上限 : '';
+    拿('原名').textContent = 数据.来源 || '';
+    拿('现名').textContent = 现.有数据 ? ('抓于 ' + (现.时间 || '—')) : '还没有数据';
+    拿('峰值').textContent = 今.峰值 || 0;
+    拿('峰值时').textContent = 今.峰值 ? '出现在 ' + 补零(今.峰值时) + ' 点' : '今天还没人进过';
+    拿('来过').textContent = 今.来过 || 0;
+    拿('进出').textContent = '进出 ' + (今.进出 || 0) + ' 次';
+
+    var 副 = (数据.服务器们 && 数据.服务器们.length > 1 ? '【' + (数据.服务器 || '') + '】 ' : '') +
+      (数据.地址 || '还没填地址') + ' · ' + (数据.模式 || '') +
+      ' · 今天采样 ' + (数据.采样数 || 0) + ' 次';
+    if (数据.错误) 副 = '连不上：' + 数据.错误;
+    拿('副').textContent = 副;
+    拿('灯').className = '点' + (数据.错误 ? '' : ' 活');
+    拿('状态字').textContent = 数据.错误 ? '没连上' : ('采样中 · ' + (数据.来源 || '—'));
+    画曲(数据.每小时 || []);
+    画玩家(现);
+    画热(数据.热力 || []);
+    画排(当前切 === '今天' ? 数据.排行今天 : 数据.排行本周);
+    画流水(数据.流水 || []);
+    拿('尾').textContent = '最后更新 ' + (数据.生成于 || '—') + (数据.时区 ? '（' + 数据.时区 + '）' : '');
+  }
+
+  function 拿一次() {
+    调接口(服参()).then(function (j) {
+      if (!j) { 拿('状态字').textContent = 拿不到(); return; }
+      数据 = j; 画(j);
+    }).catch(function (e) {
+      拿('状态字').textContent = 拿不到(e);
+    });
+  }
+
+  function 拿不到(e) {
+    return '拿不到数据' + (e && e.message ? '：' + e.message : '') + (诊断.length ? '（' + 诊断.join('；') + '）' : '');
+  }
+
+  document.querySelectorAll('.切 span').forEach(function (s) {
+    s.addEventListener('click', function () {
+      document.querySelectorAll('.切 span').forEach(function (x) { x.className = ''; });
+      s.className = '选';
+      当前切 = s.getAttribute('data切');
+      if (数据) 画排(当前切 === '今天' ? 数据.排行今天 : 数据.排行本周);
+    });
+  });
+
+  var 刷新钮 = 拿('刷新钮');
+  if (刷新钮) {
+    刷新钮.addEventListener('click', function () {
+      刷新钮.disabled = true;
+      刷新钮.textContent = '问服务器中…';
+      调接口Post(当前服 ? 'refresh/' + encodeURIComponent(当前服) : 'refresh').then(function (j) {
+        if (j) { 数据 = j; 画(j); }
+        else { 拿('状态字').textContent = '刷新没成功，等下次自动采'; }
+      }).catch(function (e) {
+        拿('状态字').textContent = 拿不到(e);
+      }).then(function () {
+        刷新钮.disabled = false;
+        刷新钮.textContent = '刷新一下';
+      });
+    });
+  }
+
+  拿一次();
+  setInterval(拿一次, 30000);
+})();
+</script>
+</body>
+</html>
